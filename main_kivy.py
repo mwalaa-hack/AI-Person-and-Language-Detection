@@ -1,3 +1,4 @@
+################### Manensa4 ne7ot prediction 3la el person
 import numpy as np
 import joblib
 import librosa
@@ -14,8 +15,8 @@ from kivy.graphics import Color, RoundedRectangle
 from kivy.properties import ListProperty
 
 
-MODEL_PATH = r"Models\language_model_final.pkl"
-ENCODER_PATH = "language_label_encoder.pkl"
+MODEL_PATH = r"Models\language_model_final_new.pkl"
+ENCODER_PATH = "language_label_encoder_new.pkl"
 WAV_PATH = "test_recording.wav"
 
 SR = 22050
@@ -55,31 +56,14 @@ def extract_features(y, sr):
 
     feature_vector = np.concatenate([
         np.mean(mfcc, axis=1),
-        np.std(mfcc, axis=1),
-
         np.mean(mfcc_delta, axis=1),
-        np.std(mfcc_delta, axis=1),
-
         np.mean(chroma, axis=1),
-        np.std(chroma, axis=1),
-
         np.mean(contrast, axis=1),
-        np.std(contrast, axis=1),
-
         np.mean(centroid, axis=1),
-        np.std(centroid, axis=1),
-
         np.mean(zcr, axis=1),
-        np.std(zcr, axis=1),
     ])
 
     return feature_vector
-
-
-# person prediction to be added later
-def predict_person(features):
-    # yeb2a 7otooha hena
-    return "Unknown"
 
 
 
@@ -209,8 +193,9 @@ class VoiceDetector(BoxLayout):
         confidence = np.max(probabilities) * 100
 
         # person prediction
-        person = predict_person(features)
-
+        #person = predict_person(features)
+        person = "Unknown"
+        
         # update UI
         self.language.text = f"Language: {language}"
         self.person.text = f"Person: {person}"

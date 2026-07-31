@@ -7,8 +7,9 @@ from sklearn.svm import SVC
 import joblib
 
 # Load Dataset
-df = pd.read_csv("preprocessed_features_2.csv")
-X = df.drop(columns=["Person", "Language"])
+df = pd.read_csv("preprocessed_features.csv")
+# X = df.drop(columns=["Person", "Language"])
+X = df.drop(columns=["Person", "Language", "Augmentation"])
 y = df["Language"]
 
 
@@ -70,14 +71,15 @@ print(confusion_matrix(y_test, predictions))
 
 # Save Model
 
-joblib.dump(best_model, "language_model_final.pkl")
-joblib.dump(label_encoder, "language_label_encoder.pkl")
+joblib.dump(best_model, "language_model_final_new.pkl")
+joblib.dump(label_encoder, "language_label_encoder_new.pkl")
 
 print("Model Saved Successfully")
-print("language_model_final.pkl")
-print("language_label_encoder.pkl")
+print("language_model_final_new.pkl")
+print("language_label_encoder_new.pkl")
 
 
+#old
 '''
 Best Cross Validation Accuracy
 83.56%
@@ -100,4 +102,38 @@ Classification Report
     accuracy                           0.90        41
    macro avg       0.91      0.90      0.90        41
 weighted avg       0.92      0.90      0.90        41
+'''
+
+
+#new
+
+''' 
+Best Cross Validation Accuracy
+92.62%
+Evaluating Best Model
+
+Test Accuracy : 93.44%
+Precision     : 0.9351
+Recall        : 0.9342
+F1 Score      : 0.9344
+
+Classification Report
+
+              precision    recall  f1-score   support
+
+      Arabic       0.92      0.97      0.94        62
+     English       0.98      0.93      0.96        61
+      French       0.92      0.92      0.92        59
+      German       0.92      0.92      0.92        62
+
+    accuracy                           0.93       244
+   macro avg       0.94      0.93      0.93       244
+weighted avg       0.94      0.93      0.93       244
+
+Confusion Matrix
+
+[[60  0  0  2]
+ [ 0 57  2  2]
+ [ 4  0 54  1]
+ [ 1  1  3 57]]
 '''
