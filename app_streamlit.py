@@ -3,8 +3,6 @@ import os
 import numpy as np
 import joblib
 import librosa
-import sounddevice as sd
-from scipy.io.wavfile import write
 import streamlit as st
 
 st.set_page_config(page_title="Voice Language Detector", layout="centered")
@@ -14,7 +12,6 @@ ENCODER_PATH = "language_label_encoder_new.pkl"
 WAV_PATH = "test_recording.wav"
 
 SR = 22050
-DURATION = 10  # seconds
 N_MFCC = 17
 N_CHROMA = 12
 N_CONTRAST = 7
@@ -133,13 +130,15 @@ st.markdown(f"<p style='text-align:center;color:#b3bac1;'>{status}</p>", unsafe_
 left, center, right = st.columns([1,3,1])
 
 with center:
-    if st.button("Record (10s)", use_container_width=True):
-        with st.spinner(f"Recording for {DURATION} seconds..."):
-            recording = sd.rec(int(DURATION * SR), samplerate=SR, channels=1, dtype=np.float32)
-            sd.wait()
-            write(WAV_PATH, SR, recording.flatten())
-        st.session_state.recorded = True
-        st.rerun()
+    audio_file = st.audio_input("Record your voice")
+
+if audio_file is not None:
+    with open(WAV_PATH, "wb") as f:
+        f.write(audio_file.getbuffer())
+
+    st.session_state.recorded = True
+
+
 
 # Predict
 left, center, right = st.columns([1,3,1])
