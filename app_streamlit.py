@@ -7,7 +7,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Voice Language Detector", layout="centered")
 
-MODEL_PATH = r"Models\language_model_final_new.pkl"
+MODEL_PATH = "Models/language_model_final_new.pkl"
 ENCODER_PATH = "language_label_encoder_new.pkl"
 WAV_PATH = "test_recording.wav"
 
