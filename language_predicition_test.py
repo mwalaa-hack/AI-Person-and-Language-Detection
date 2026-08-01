@@ -4,8 +4,8 @@ import numpy as np
 import sounddevice as sd
 from scipy.io.wavfile import write
 
-MODEL_PATH = r"Models\language_model_final.pkl"
-ENCODER_PATH = "language_label_encoder.pkl"
+MODEL_PATH = r"language_model_final_new.pkl"
+ENCODER_PATH = "language_label_encoder_new.pkl"
 
 SR = 22050
 DURATION = 10 #seconds
@@ -21,37 +21,59 @@ model = joblib.load(MODEL_PATH)
 label_encoder = joblib.load(ENCODER_PATH)
 
 
-# Feature Extraction
+# # Feature Extraction
+# def extract_features(y, sr):
+#     mfcc = librosa.feature.mfcc(y=y,sr=sr,n_mfcc=N_MFCC)
+#     mfcc = librosa.util.normalize(mfcc)
+#     mfcc_delta = librosa.feature.delta(mfcc)
+#     chroma = librosa.feature.chroma_stft(y=y,sr=sr,n_chroma=N_CHROMA)
+#     contrast = librosa.feature.spectral_contrast(y=y,sr=sr,n_bands=N_CONTRAST - 1)
+#     centroid = librosa.feature.spectral_centroid(y=y,sr=sr)
+#     zcr = librosa.feature.zero_crossing_rate(y)
+#     feature_vector = np.concatenate([
+
+#         np.mean(mfcc, axis=1),
+#         np.std(mfcc, axis=1),
+
+#         np.mean(mfcc_delta, axis=1),
+#         np.std(mfcc_delta, axis=1),
+
+#         np.mean(chroma, axis=1),
+#         np.std(chroma, axis=1),
+
+#         np.mean(contrast, axis=1),
+#         np.std(contrast, axis=1),
+
+#         np.mean(centroid, axis=1),
+#         np.std(centroid, axis=1),
+
+#         np.mean(zcr, axis=1),
+#         np.std(zcr, axis=1),
+#     ])
+
+#     return feature_vector
+
+
+#test version
 def extract_features(y, sr):
-    mfcc = librosa.feature.mfcc(y=y,sr=sr,n_mfcc=N_MFCC)
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=N_MFCC)
     mfcc = librosa.util.normalize(mfcc)
     mfcc_delta = librosa.feature.delta(mfcc)
-    chroma = librosa.feature.chroma_stft(y=y,sr=sr,n_chroma=N_CHROMA)
-    contrast = librosa.feature.spectral_contrast(y=y,sr=sr,n_bands=N_CONTRAST - 1)
-    centroid = librosa.feature.spectral_centroid(y=y,sr=sr)
+
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr, n_chroma=N_CHROMA)
+    contrast = librosa.feature.spectral_contrast(y=y, sr=sr, n_bands=N_CONTRAST - 1)
+    centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
     zcr = librosa.feature.zero_crossing_rate(y)
-    feature_vector = np.concatenate([
 
+    return np.concatenate([
         np.mean(mfcc, axis=1),
-        np.std(mfcc, axis=1),
-
         np.mean(mfcc_delta, axis=1),
-        np.std(mfcc_delta, axis=1),
-
         np.mean(chroma, axis=1),
-        np.std(chroma, axis=1),
-
         np.mean(contrast, axis=1),
-        np.std(contrast, axis=1),
-
         np.mean(centroid, axis=1),
-        np.std(centroid, axis=1),
-
         np.mean(zcr, axis=1),
-        np.std(zcr, axis=1),
     ])
 
-    return feature_vector
 
 
 # Record Audio
