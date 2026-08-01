@@ -1,25 +1,28 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split,StratifiedKFold,GridSearchCV
+from sklearn.model_selection import StratifiedKFold,GridSearchCV
 from sklearn.preprocessing import StandardScaler,LabelEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score,precision_score,recall_score,f1_score,classification_report,confusion_matrix
 from sklearn.svm import SVC
 import joblib
 
-# Load Dataset
-df = pd.read_csv("preprocessed_features.csv")
-# X = df.drop(columns=["Person", "Language"])
-X = df.drop(columns=["Person", "Language", "Augmentation"])
-y = df["Language"]
+# Load Dataset — train and test were already split (and only train was augmented)
+# during preprocessing, so we load them separately here instead of splitting one file.
+train_df = pd.read_csv("train_features.csv")
+test_df = pd.read_csv("test_features.csv")
+
+X_train = train_df.drop(columns=["Person", "Language", "Augmentation"])
+y_train = train_df["Language"]
+
+X_test = test_df.drop(columns=["Person", "Language", "Augmentation"])
+y_test = test_df["Language"]
 
 
-# Encode Labels
+# Encode Labels — fit only on train, then reuse the same encoder for test
+# so label indices are consistent across both sets.
 label_encoder = LabelEncoder()
-y = label_encoder.fit_transform(y)
-
-
-# Train/Test Split
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.20,stratify=y,random_state=42)
+y_train = label_encoder.fit_transform(y_train)
+y_test = label_encoder.transform(y_test)
 
 
 # SVM Pipeline
