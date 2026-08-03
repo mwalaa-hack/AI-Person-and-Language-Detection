@@ -77,6 +77,28 @@ def extract_features(y, sr):
     return feature_vector
 
 
+# Feature Extraction for person model (means only, no std -> 55 features)
+def extract_person_features(y, sr):
+    mfcc = librosa.feature.mfcc(y=y,sr=sr,n_mfcc=N_MFCC)
+    mfcc = librosa.util.normalize(mfcc)
+    mfcc_delta = librosa.feature.delta(mfcc)
+    chroma = librosa.feature.chroma_stft(y=y,sr=sr,n_chroma=N_CHROMA)
+    contrast = librosa.feature.spectral_contrast(y=y,sr=sr,n_bands=N_CONTRAST - 1)
+    centroid = librosa.feature.spectral_centroid(y=y,sr=sr)
+    zcr = librosa.feature.zero_crossing_rate(y)
+    feature_vector = np.concatenate([
+
+        np.mean(mfcc, axis=1),
+        np.mean(mfcc_delta, axis=1),
+        np.mean(chroma, axis=1),
+        np.mean(contrast, axis=1),
+        np.mean(centroid, axis=1),
+        np.mean(zcr, axis=1),
+    ])
+
+    return feature_vector
+
+
 
 st.markdown("""
 <style>
@@ -134,7 +156,7 @@ h1,h2,h3,p{
 st.session_state.setdefault("recorded", False)
 st.session_state.setdefault("language", "")
 st.session_state.setdefault("person", "")
-st.session_state.setdefault("lang_confidence", "")
+st.session_state.setdefault("confidence", "")
 st.session_state.setdefault("person_confidence", "")
 st.session_state.setdefault("flag", "")
 
@@ -182,21 +204,20 @@ with center:
             lang_confidence = np.max(lang_probabilities) * 100
 
             st.session_state.language = language
-            st.session_state.lang_confidence = f"{lang_confidence:.1f}%"
 
             if person_model is not None and person_label_encoder is not None:
-                person_prediction = person_model.predict(features)
+                person_features = extract_person_features(audio, SR).reshape(1, -1)
+                person_prediction = person_model.predict(person_features)
                 person = person_label_encoder.inverse_transform(person_prediction)[0]
-                person_probabilities = person_model.predict_proba(features)[0]
+                person_probabilities = person_model.predict_proba(person_features)[0]
                 person_confidence = np.max(person_probabilities) * 100
-
                 st.session_state.person = person
                 st.session_state.person_confidence = f"{person_confidence:.1f}%"
             else:
                 st.error("Person model not loaded!")
                 st.session_state.person = "Unknown"
                 st.session_state.person_confidence = "-"
-            
+            st.session_state.confidence = f"{lang_confidence:.1f}%"
             st.session_state.flag = FLAG_PATHS.get(language, "")
         st.rerun()
 
@@ -207,7 +228,7 @@ with center:
         st.session_state.recorded = False
         st.session_state.language = ""
         st.session_state.person = ""
-        st.session_state.lang_confidence = ""
+        st.session_state.confidence = ""
         st.session_state.person_confidence = ""
         st.session_state.flag = ""
         st.rerun()
@@ -222,7 +243,7 @@ with st.container(border=True):
         st.write("No flag selected")
 
     st.subheader(f"Language: {st.session_state.language or '-'}")
-    st.write(f"Language Confidence: {st.session_state.lang_confidence or '-'}")
+    st.write(f"Language Confidence: {st.session_state.confidence or '-'}")
 
     st.subheader(f"Person: {st.session_state.person or '-'}")
     st.write(f"Person Confidence: {st.session_state.person_confidence or '-'}")
