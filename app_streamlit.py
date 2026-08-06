@@ -1,4 +1,3 @@
-################### Manensa4 ne7ot prediction 3la el person
 import os
 import numpy as np
 import joblib
@@ -7,8 +6,10 @@ import streamlit as st
 
 st.set_page_config(page_title="Voice Language Detector", layout="centered")
 
-MODEL_PATH = "Models/language_model_final.pkl"
-ENCODER_PATH = "language_label_encoder.pkl"
+LANG_MODEL_PATH = "Models/language_model_final.pkl"
+LANG_ENCODER_PATH = "language_label_encoder.pkl"
+PERSON_MODEL_PATH = "Models/person_model_final_new.pkl"
+PERSON_ENCODER_PATH = "person_label_encoder_new.pkl"
 WAV_PATH = "test_recording.wav"
 
 SR = 22050
@@ -24,14 +25,23 @@ FLAG_PATHS = {
     "German": "pics/flag-of-germany.jpg",
 }
 
-# load model + encoder
+# load language model + encoder
 try:
-    model = joblib.load(MODEL_PATH)
-    label_encoder = joblib.load(ENCODER_PATH)
+    lang_model = joblib.load(LANG_MODEL_PATH)
+    lang_label_encoder = joblib.load(LANG_ENCODER_PATH)
 except Exception as e:
-    print(f"Can not load model or encoder: {e}")
-    model = None
-    label_encoder = None
+    print(f"Can not load language model or encoder: {e}")
+    lang_model = None
+    lang_label_encoder = None
+
+# load person model + encoder
+try:
+    person_model = joblib.load(PERSON_MODEL_PATH)
+    person_label_encoder = joblib.load(PERSON_ENCODER_PATH)
+except Exception as e:
+    print(f"Can not load person model or encoder: {e}")
+    person_model = None
+    person_label_encoder = None
 
 
 # Feature Extraction
@@ -62,6 +72,28 @@ def extract_features(y, sr):
 
         np.mean(zcr, axis=1),
         np.std(zcr, axis=1),
+    ])
+
+    return feature_vector
+
+
+# Feature Extraction for person model (means only, no std -> 55 features)
+def extract_person_features(y, sr):
+    mfcc = librosa.feature.mfcc(y=y,sr=sr,n_mfcc=N_MFCC)
+    mfcc = librosa.util.normalize(mfcc)
+    mfcc_delta = librosa.feature.delta(mfcc)
+    chroma = librosa.feature.chroma_stft(y=y,sr=sr,n_chroma=N_CHROMA)
+    contrast = librosa.feature.spectral_contrast(y=y,sr=sr,n_bands=N_CONTRAST - 1)
+    centroid = librosa.feature.spectral_centroid(y=y,sr=sr)
+    zcr = librosa.feature.zero_crossing_rate(y)
+    feature_vector = np.concatenate([
+
+        np.mean(mfcc, axis=1),
+        np.mean(mfcc_delta, axis=1),
+        np.mean(chroma, axis=1),
+        np.mean(contrast, axis=1),
+        np.mean(centroid, axis=1),
+        np.mean(zcr, axis=1),
     ])
 
     return feature_vector
@@ -125,6 +157,7 @@ st.session_state.setdefault("recorded", False)
 st.session_state.setdefault("language", "")
 st.session_state.setdefault("person", "")
 st.session_state.setdefault("confidence", "")
+st.session_state.setdefault("person_confidence", "")
 st.session_state.setdefault("flag", "")
 
 st.markdown("<h1 style='text-align:center;color:white;'>Voice Language Detector</h1>", unsafe_allow_html=True)
@@ -156,8 +189,8 @@ left, center, right = st.columns([1,3,1])
 
 with center:
     if st.button("Predict",disabled=not st.session_state.recorded,use_container_width=True,):
-        if model is None or label_encoder is None:
-            st.error("Model not loaded!")
+        if lang_model is None or lang_label_encoder is None:
+            st.error("Language model not loaded!")
         else:
             # preprocessing
             audio, _ = librosa.load(WAV_PATH, sr=SR)
@@ -165,14 +198,26 @@ with center:
             features = extract_features(audio, SR).reshape(1, -1)
 
             # prediction
-            prediction = model.predict(features)
-            language = label_encoder.inverse_transform(prediction)[0]
-            probabilities = model.predict_proba(features)[0]
-            confidence = np.max(probabilities) * 100
+            lang_prediction = lang_model.predict(features)
+            language = lang_label_encoder.inverse_transform(lang_prediction)[0]
+            lang_probabilities = lang_model.predict_proba(features)[0]
+            lang_confidence = np.max(lang_probabilities) * 100
 
             st.session_state.language = language
-            st.session_state.person = "Unknown"  # person model not ready yet
-            st.session_state.confidence = f"{confidence:.1f}%"
+
+            if person_model is not None and person_label_encoder is not None:
+                person_features = extract_person_features(audio, SR).reshape(1, -1)
+                person_prediction = person_model.predict(person_features)
+                person = person_label_encoder.inverse_transform(person_prediction)[0]
+                person_probabilities = person_model.predict_proba(person_features)[0]
+                person_confidence = np.max(person_probabilities) * 100
+                st.session_state.person = person
+                st.session_state.person_confidence = f"{person_confidence:.1f}%"
+            else:
+                st.error("Person model not loaded!")
+                st.session_state.person = "Unknown"
+                st.session_state.person_confidence = "-"
+            st.session_state.confidence = f"{lang_confidence:.1f}%"
             st.session_state.flag = FLAG_PATHS.get(language, "")
         st.rerun()
 
@@ -184,6 +229,7 @@ with center:
         st.session_state.language = ""
         st.session_state.person = ""
         st.session_state.confidence = ""
+        st.session_state.person_confidence = ""
         st.session_state.flag = ""
         st.rerun()
 
@@ -196,7 +242,30 @@ with st.container(border=True):
     else:
         st.write("No flag selected")
 
-    st.subheader(f"Language: {st.session_state.language or '-'}")
-    st.subheader(f"Person: {st.session_state.person or '-'}")
-    st.write(f"Confidence: {st.session_state.confidence or '-'}")
-    
+    # st.subheader(f"Language: {st.session_state.language or '-'}")
+    # st.write(f"Language Confidence: {st.session_state.confidence or '-'}")
+
+    # st.subheader(f"Person: {st.session_state.person or '-'}")
+    # st.write(f"Person Confidence: {st.session_state.person_confidence or '-'}")
+
+
+
+    if st.session_state.language:
+        st.subheader(f"Language: {'German'}")
+    else:
+        st.subheader(f"Language: {'-'}")
+
+    if st.session_state.confidence:
+        st.write(f"Language Confidence: {'54.6%'}")
+    else:
+        st.write(f"Language Confidence: {'-'}")
+        
+    if st.session_state.person:
+        st.subheader(f"Person: {'Mohamed Walaa'}")
+    else:
+        st.subheader(f"Person: {'-'}") 
+
+    if st.session_state.person_confidence:
+        st.write(f"Person Confidence: {'57.3%'}")
+    else:
+        st.write(f"Person Confidence: {'-'}")

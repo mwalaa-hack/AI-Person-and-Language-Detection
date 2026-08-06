@@ -9,23 +9,24 @@ import joblib
 
 RANDOM_STATE = 42
 
-# 1. Load data
-df = pd.read_csv("preprocessed_features_2.csv")
+# 1. Load Dataset — train and test were already split (and only train was augmented)
+# during preprocessing, so we load them separately here instead of splitting one file.
+train_df = pd.read_csv("train_features.csv")
+test_df = pd.read_csv("test_features.csv")
 
-feature_cols = [c for c in df.columns if c not in ("Person", "Language")]
-X = df.drop(columns=["Person", "Language"]).values
-y = df["Person"].values
+X_train = train_df.drop(columns=["Person", "Language", "Augmentation"])
+y_train = train_df["Person"]
+
+X_test = test_df.drop(columns=["Person", "Language", "Augmentation"])
+y_test = test_df["Person"]
 
 le = LabelEncoder()
-y = le.fit_transform(y)
+y_train = le.fit_transform(y_train)
+y_test = le.transform(y_test)
 print("Classes:", list(le.classes_))
-print("Feature matrix:", X.shape)
+print("Train Feature matrix:", X_train.shape)
+print("Test Feature matrix:", X_test.shape)
 
-
-# 2. Train / test split (stratified so each person is balanced)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE
-)
 print(f"Train: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
 
 
@@ -52,11 +53,11 @@ grid.fit(X_train, y_train)
 
 print("\nBest params:", grid.best_params_)
 print(f"Best CV accuracy: {grid.best_score_:.4f}")
-
 best_model = grid.best_estimator_
 
 
 # 4. Evaluate on held-out test set
+print("Evaluating Best Model")
 y_pred = best_model.predict(X_test)
 test_acc = accuracy_score(y_test, y_pred)
 print(f"\nHeld-out test accuracy: {test_acc:.4f}\n")
@@ -74,12 +75,55 @@ print(pd.DataFrame(
 
 # 5. Extra sanity check: 5-fold CV accuracy on the FULL dataset
 #    (more reliable signal than a single split, given only 300 samples)
-full_cv_scores = cross_val_score(best_model, X, y, cv=cv, scoring="accuracy")
+full_cv_scores = cross_val_score(best_model, X_train, y_train, cv=cv, scoring="accuracy")
 print(f"\nFull-dataset 5-fold CV accuracy: {full_cv_scores.mean():.4f} "
       f"(+/- {full_cv_scores.std():.4f})")
 
 
 # 6. Save model + label encoder for later use / comparison
-joblib.dump(best_model, "person_model.joblib")
-joblib.dump(le, "person_label_encoder.joblib")
-print("\nSaved: person_model.joblib, person_label_encoder.joblib")
+joblib.dump(best_model, "person_model_final_new.pkl")
+joblib.dump(le, "person_label_encoder_new.pkl")
+
+print("Model Saved Successfully")
+print("person_model_final_new.pkl")
+print("person_label_encoder_new.pkl")
+
+
+#output
+'''
+Classes: ['EsraaM', 'MWalaa', 'MariamB']
+Train Feature matrix: (976, 55)
+Test Feature matrix: (61, 55)
+Train: 976 samples | Test: 61 samples
+Fitting 5 folds for each of 30 candidates, totalling 150 fits
+
+Best params: {'svm__C': 5, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}
+Best CV accuracy: 0.9979
+
+Evaluating Best Model
+
+Held-out test accuracy: 1.0000
+
+Classification report:
+              precision    recall  f1-score   support
+
+      EsraaM       1.00      1.00      1.00        20
+      MWalaa       1.00      1.00      1.00        21
+     MariamB       1.00      1.00      1.00        20
+
+    accuracy                           1.00        61
+   macro avg       1.00      1.00      1.00        61
+weighted avg       1.00      1.00      1.00        61
+
+Confusion matrix:
+              pred_EsraaM  pred_MWalaa  pred_MariamB
+true_EsraaM            20            0             0
+true_MWalaa             0           21             0
+true_MariamB            0            0            20
+
+Full-dataset 5-fold CV accuracy: 0.9979
+
+Model Saved Successfully
+person_model_final_new.pkl
+person_label_encoder_new.pkl
+'''
