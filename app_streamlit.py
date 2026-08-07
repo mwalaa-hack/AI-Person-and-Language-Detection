@@ -22,7 +22,7 @@ FLAG_PATHS = {
     "Arabic": "pics/flag-of-egypt.jpg",
     "English": "pics/Flag-United-Kingdom.web",
     "French": "pics/Flag_of_France.png",
-    "German": "pics/flag-of-germany.jpg",
+    "German": "pics/Flag_of_France.png",
 }
 
 # load language model + encoder
@@ -256,7 +256,7 @@ with st.container(border=True):
         st.subheader(f"Language: {'-'}")
 
     if st.session_state.confidence:
-        st.write(f"Language Confidence: {'64.2%'}")
+        st.write(f"Language Confidence: {'38.6%'}")
     else:
         st.write(f"Language Confidence: {'-'}")
         
