@@ -251,12 +251,12 @@ with st.container(border=True):
 
 
     if st.session_state.language:
-        st.subheader(f"Language: {'Arabic'}")
+        st.subheader(f"Language: {'French'}")
     else:
         st.subheader(f"Language: {'-'}")
 
     if st.session_state.confidence:
-        st.write(f"Language Confidence: {'70.9%'}")
+        st.write(f"Language Confidence: {'64.2%'}")
     else:
         st.write(f"Language Confidence: {'-'}")
         
@@ -266,6 +266,6 @@ with st.container(border=True):
         st.subheader(f"Person: {'-'}") 
 
     if st.session_state.person_confidence:
-        st.write(f"Person Confidence: {'39.4%'}")
+        st.write(f"Person Confidence: {'41.8%'}")
     else:
         st.write(f"Person Confidence: {'-'}")
