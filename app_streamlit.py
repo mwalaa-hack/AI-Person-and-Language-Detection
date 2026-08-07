@@ -19,10 +19,10 @@ N_CONTRAST = 7
 TOP_DB = 30
 
 FLAG_PATHS = {
-    "Arabic": "pics/Flag_of_France.png",
-    "English": "pics/Flag_of_France.png",
+    "Arabic": "pics/flag-of-egypt.jpg",
+    "English": "pics/Flag-United-Kingdom.web",
     "French": "pics/Flag_of_France.png",
-    "German": "pics/Flag_of_France.png",
+    "German": "pics/flag-of-germany.jpg",
 }
 
 # load language model + encoder
