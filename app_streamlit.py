@@ -251,21 +251,21 @@ with st.container(border=True):
 
 
     if st.session_state.language:
-        st.subheader(f"Language: {'German'}")
+        st.subheader(f"Language: {'Arabic'}")
     else:
         st.subheader(f"Language: {'-'}")
 
     if st.session_state.confidence:
-        st.write(f"Language Confidence: {'54.6%'}")
+        st.write(f"Language Confidence: {'70.9%'}")
     else:
         st.write(f"Language Confidence: {'-'}")
         
     if st.session_state.person:
-        st.subheader(f"Person: {'Mohamed Walaa'}")
+        st.subheader(f"Person: {'Esraa Mohamed'}")
     else:
         st.subheader(f"Person: {'-'}") 
 
     if st.session_state.person_confidence:
-        st.write(f"Person Confidence: {'57.3%'}")
+        st.write(f"Person Confidence: {'39.4%'}")
     else:
         st.write(f"Person Confidence: {'-'}")
